@@ -1,8 +1,3 @@
-/**
-* curl http://localhost:8080/
-* curl --data "users=yifan,yifan2" http://localhost:8080/import
-* curl http://localhost:8080/lucky
-*/
 package controller
 
 import (
