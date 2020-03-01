@@ -2,6 +2,8 @@
 https://coding.imooc.com/class/chapter/295.html#Anchor
 http://www.52studyit.com/
 
+gofmt -l -w -s
+
 Get started by creating a new file or uploading an existing file. We recommend every repository include a README, LICENSE, and .gitignore.
 
 …or create a new repository on the command line
