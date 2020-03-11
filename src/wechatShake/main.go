@@ -2,6 +2,8 @@
  * 微信摇一摇
  * 基础功能:
  * /lucky 只有一个抽奖的接口
+ * 压力测试:
+ * wrk -t10 -c10 -d5 http://localhost:8080/lucky
  */
 package main
 
@@ -13,6 +15,7 @@ import (
 	"math/rand"
 	"os"
 	"time"
+    "sync"
 )
 
 // 奖品类型，枚举值 iota 从0开始
@@ -47,13 +50,14 @@ var logger *log.Logger
 
 // 奖品列表
 var giftList []*gift
+var mu sync.Mutex
 
 type lotteryController struct {
 }
 
 // 初始化日志
 func initLog() {
-	f, _ := os.Create("/var/log/lottery_demo.log")
+	f, _ := os.Create("/Users/didi/self/lottery/src/wechatShake/lottery_demo.log")
 	logger = log.New(f, "", log.Ldate|log.Lmicroseconds)
 }
 
@@ -68,8 +72,11 @@ func initGift() {
 		gtype:    giftTypeRealLarge,
 		data:     "",
 		dataList: nil,
-		total:    1000,
-		left:     1000,
+		total:    20000,
+		left:     20000,
+
+		//total:    1,
+		//left:     1,
 		inuse:    true,
 		rate:     10000,
 		rateMin:  0,
@@ -87,7 +94,7 @@ func initGift() {
 		total:    5,
 		left:     5,
 		inuse:    true,
-		rate:     100,
+		rate:     10,
 		rateMin:  0,
 		rateMax:  0,
 	}
@@ -100,10 +107,10 @@ func initGift() {
 		gtype:    giftTypeCouponFix,
 		data:     "mall-coupon-2018",
 		dataList: nil,
-		total:    5,
-		left:     5,
+		total:    50,
+		left:     50,
 		inuse:    true,
-		rate:     5000,
+		rate:     500,
 		rateMin:  0,
 		rateMax:  0,
 	}
@@ -116,9 +123,10 @@ func initGift() {
 		gtype:    giftTypeCoupon,
 		data:     "",
 		dataList: []string{"c01", "c02", "c03", "c04", "c05"},
+        total: 5,
 		left:     5,
 		inuse:    true,
-		rate:     2000,
+		rate:     100,
 		rateMin:  0,
 		rateMax:  0,
 	}
@@ -131,6 +139,7 @@ func initGift() {
 		gtype:    giftTypeCoin,
 		data:     "10金币",
 		dataList: nil,
+        total: 5,
 		left:     5,
 		inuse:    true,
 		rate:     5000,
@@ -184,6 +193,8 @@ func (c *lotteryController) Get() string {
 
 // 抽奖 GET http://localhost:8080/lucky
 func (c *lotteryController) GetLucky() map[string]interface{} {
+    mu.Lock()
+    defer mu.Unlock()
 	code := luckyCode()
 	ok := false
 	result := make(map[string]interface{})
@@ -209,6 +220,7 @@ func (c *lotteryController) GetLucky() map[string]interface{} {
 			case giftTypeRealLarge:
 				ok, sendData = sendRealLarge(data)
 			}
+                logger.Printf("%d", ok)
             if ok {
                 // 中奖后，成功得到奖品
                 // 生成中奖记录
